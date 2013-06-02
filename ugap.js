@@ -15,7 +15,8 @@ module.exports = {
                 return genAST(
                     node.expression.expression,
                     forEachCb.argnames,
-                    forEachCb.body
+                    forEachCb.body,
+                    node.args[1]
                 );
             }
         });
@@ -35,7 +36,7 @@ function itIsCall(node, name) {
             )
 }
 
-function genAST(arrayReference, args, body) {
+function genAST(arrayReference, args, body, thisObj) {
     // args - forEach(function(arrayItemValue, iterator, array){})
 
     var arrayItemValue = args[0] || new UglifyJS.AST_SymbolRef({name: 'ugAP_array_item_value'});
@@ -57,51 +58,61 @@ function genAST(arrayReference, args, body) {
         ]
     }));
 
+    var cbFunction = new UglifyJS.AST_Function({
+        argnames: [arrayRef],
+        name: null,
+        body: [
+            new UglifyJS.AST_For({
+                // var
+                init: new UglifyJS.AST_Var({
+                    definitions: [
+                        // i = 0
+                        new UglifyJS.AST_VarDef({
+                            name: arrayIterator,
+                            value: new UglifyJS.AST_Number({value: 0})
+                        }),
 
-    return new UglifyJS.AST_Call({
-        expression: new UglifyJS.AST_Function({
-            argnames: [arrayRef],
-            name: null,
-            body: [
-                new UglifyJS.AST_For({
-                    // var
-                    init: new UglifyJS.AST_Var({
-                        definitions: [
-                            // i = 0
-                            new UglifyJS.AST_VarDef({
-                                name: arrayIterator,
-                                value: new UglifyJS.AST_Number({value: 0})
-                            }),
-
-                            // j = arr.length
-                            new UglifyJS.AST_VarDef({
-                                name: arrayLength,
-                                value: new UglifyJS.AST_Dot({
-                                    property: 'length',
-                                    expression: arrayRef
-                                })
+                        // j = arr.length
+                        new UglifyJS.AST_VarDef({
+                            name: arrayLength,
+                            value: new UglifyJS.AST_Dot({
+                                property: 'length',
+                                expression: arrayRef
                             })
-                        ]
-                    }),
-                    // i < j
-                    condition: new UglifyJS.AST_Binary({
-                        left: arrayIterator,
-                        operator: '<',
-                        right: arrayLength
-                    }),
-                    // i++
-                    step: new UglifyJS.AST_UnaryPostfix({
-                        expression: arrayIterator,
-                        operator: '++'
-                    }),
-                    body: new UglifyJS.AST_BlockStatement({
-                        body: body
-                    })
+                        })
+                    ]
+                }),
+                // i < j
+                condition: new UglifyJS.AST_Binary({
+                    left: arrayIterator,
+                    operator: '<',
+                    right: arrayLength
+                }),
+                // i++
+                step: new UglifyJS.AST_UnaryPostfix({
+                    expression: arrayIterator,
+                    operator: '++'
+                }),
+                body: new UglifyJS.AST_BlockStatement({
+                    body: body
                 })
-            ]
-        }),
-        args: [
-            arrayReference
+            })
         ]
     });
+
+    if (thisObj) {
+        return new UglifyJS.AST_Call({
+            expression: new UglifyJS.AST_Dot({
+                property: 'apply',
+                expression: cbFunction
+            }),
+            args: [thisObj, arrayReference]
+        });
+
+    } else {
+        return new UglifyJS.AST_Call({
+            expression: cbFunction,
+            args: [arrayReference]
+        });
+    }
 }
