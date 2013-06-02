@@ -10,14 +10,14 @@
         "type": "git",
         "url": ""
     },
+    "main": "ugap.js",
     "dependencies": {
         "uglify-js": "*"
     },
     "devDependencies": {
         "chai": "*",
         "jshint": "*",
-        "mocha": "*",
-        "sinon": "*"
+        "mocha": "*"
     },
     "engines": {
         "node": ">=0.8"
