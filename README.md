@@ -1,7 +1,7 @@
 uglify-array-plainize
 =====================
 
-UglifyJS plugin to convert modern array methods (forEach, map, filter) to plain JS for-loop
+[UglifyJS](https://github.com/mishoo/UglifyJS2) plugin to convert modern array methods (forEach, map, filter) to plain JS for-loop
 
 It's just an experiment.
 
