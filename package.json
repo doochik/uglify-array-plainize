@@ -4,15 +4,15 @@
         "email": "doochik@ya.ru"
     },
     "name": "uglify-array-plainize",
-    "description": "",
+    "description": "UglifyJS plugin to convert modern array methods (forEach, map, filter) to plain JS for-loop",
     "version": "0.0.0",
     "repository": {
         "type": "git",
-        "url": ""
+        "url": "git://github.com/doochik/uglify-array-plainize.git"
     },
     "main": "ugap.js",
     "dependencies": {
-        "uglify-js": "*"
+        "uglify-js": ">=2.2"
     },
     "devDependencies": {
         "chai": "*",
