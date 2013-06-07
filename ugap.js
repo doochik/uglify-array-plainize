@@ -12,12 +12,23 @@ module.exports = {
         var ugapTransformer = new UglifyJS.TreeTransformer(function(node){
             if (itIsCall(node, 'forEach')) {
                 var forEachCb = node.args[0];
-                return genAST(
-                    node.expression.expression,
-                    forEachCb.argnames,
-                    forEachCb.body,
-                    node.args[1]
-                );
+                // arr.forEach(fn)
+                if (forEachCb instanceof UglifyJS.AST_SymbolRef) {
+                    return genAST(
+                        node.expression.expression,
+                        [],
+                        forEachCb.name,
+                        node.args[1]
+                    );
+
+                } else {
+                    return genAST(
+                        node.expression.expression,
+                        forEachCb.argnames,
+                        forEachCb.body,
+                        node.args[1]
+                    );
+                }
             }
         });
 
@@ -44,19 +55,37 @@ function genAST(arrayReference, args, body, thisObj) {
     var arrayRef = args[2] || new UglifyJS.AST_SymbolRef({name: 'ugAP_array_reference'});
     var arrayLength = new UglifyJS.AST_SymbolRef({name: 'ugAP_array_length'});
 
-    // add first string to for-loop body
-    // var arrayItemValue = arrayRef["arrayIterator"]
-    body.unshift(new UglifyJS.AST_Var({
-        definitions: [
-            new UglifyJS.AST_VarDef({
-                name: arrayItemValue,
-                value: new UglifyJS.AST_Sub({
-                    property: arrayIterator,
-                    expression: arrayRef
-                })
+    if (typeof body == 'string') {
+
+        body = [
+            new UglifyJS.AST_Call({
+                expression: new UglifyJS.AST_SymbolRef({name: 'fn'}),
+                args: [
+                    new UglifyJS.AST_Sub({
+                        property: arrayIterator,
+                        expression: arrayRef
+                    }),
+                    arrayIterator,
+                    arrayRef
+                ]
             })
         ]
-    }));
+
+    } else {
+        // add first string to for-loop body
+        // var arrayItemValue = arrayRef["arrayIterator"]
+        body.unshift(new UglifyJS.AST_Var({
+            definitions: [
+                new UglifyJS.AST_VarDef({
+                    name: arrayItemValue,
+                    value: new UglifyJS.AST_Sub({
+                        property: arrayIterator,
+                        expression: arrayRef
+                    })
+                })
+            ]
+        }));
+    }
 
     var cbFunction = new UglifyJS.AST_Function({
         argnames: [arrayRef],
