@@ -8,4 +8,4 @@ a.forEach(function(val, i, arr) {
         var val = arr[i];
         console.log(val, i, arr);
     }
-}).apply({}, a);
+}).call({}, a);

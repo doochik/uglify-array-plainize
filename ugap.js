@@ -57,17 +57,27 @@ function genAST(arrayReference, args, body, thisObj) {
 
     if (typeof body == 'string') {
 
+        var fn = new UglifyJS.AST_SymbolRef({name: body});
+        var fnArgs = [
+            new UglifyJS.AST_Sub({
+                property: arrayIterator,
+                expression: arrayRef
+            }),
+            arrayIterator,
+            arrayRef
+        ];
+        if (thisObj) {
+            fnArgs.unshift(thisObj);
+            fn = new UglifyJS.AST_Dot({
+                    property: 'call',
+                    expression: fn
+            });
+        }
+
         body = [
             new UglifyJS.AST_Call({
-                expression: new UglifyJS.AST_SymbolRef({name: 'fn'}),
-                args: [
-                    new UglifyJS.AST_Sub({
-                        property: arrayIterator,
-                        expression: arrayRef
-                    }),
-                    arrayIterator,
-                    arrayRef
-                ]
+                expression: fn,
+                args: fnArgs
             })
         ]
 
@@ -132,7 +142,7 @@ function genAST(arrayReference, args, body, thisObj) {
     if (thisObj) {
         return new UglifyJS.AST_Call({
             expression: new UglifyJS.AST_Dot({
-                property: 'apply',
+                property: 'call',
                 expression: cbFunction
             }),
             args: [thisObj, arrayReference]
