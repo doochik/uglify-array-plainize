@@ -56,6 +56,7 @@ function genAST(arrayReference, args, body, thisObj) {
     var arrayLength = new UglifyJS.AST_SymbolRef({name: 'ugAP_array_length'});
 
     if (typeof body == 'string') {
+        var cbIsNamedFunction = true;
 
         var fn = new UglifyJS.AST_SymbolRef({name: body});
         var fnArgs = [
@@ -97,8 +98,13 @@ function genAST(arrayReference, args, body, thisObj) {
         }));
     }
 
+    var fnArgnames = [arrayRef];
+    if (cbIsNamedFunction && thisObj) {
+        fnArgnames.push(thisObj);
+    }
+
     var cbFunction = new UglifyJS.AST_Function({
-        argnames: [arrayRef],
+        argnames: fnArgnames,
         name: null,
         body: [
             new UglifyJS.AST_For({
@@ -139,13 +145,19 @@ function genAST(arrayReference, args, body, thisObj) {
         ]
     });
 
-    if (thisObj) {
+    if (thisObj && !cbIsNamedFunction) {
         return new UglifyJS.AST_Call({
             expression: new UglifyJS.AST_Dot({
                 property: 'call',
                 expression: cbFunction
             }),
             args: [thisObj, arrayReference]
+        });
+
+    } else if (thisObj && cbIsNamedFunction) {
+        return new UglifyJS.AST_Call({
+            expression: cbFunction,
+            args: [arrayReference, thisObj]
         });
 
     } else {
